@@ -1,0 +1,13 @@
+﻿version: '2.3'
+services:
+  rabbit:
+    image: masstransit/rabbitmq:latest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  postgres:
+    image: "postgres:9.6"
+    environment:
+      - "POSTGRES_PASSWORD=Password12!"
+    ports:
+      - 5432:5432
