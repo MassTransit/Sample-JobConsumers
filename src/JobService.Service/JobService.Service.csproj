@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.4" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.0.4" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.4" />
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.5-develop.2955" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.0.5-develop.2955" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.5-develop.2955" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
