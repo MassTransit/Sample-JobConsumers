@@ -1,6 +1,8 @@
+using System;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using JobService.Components;
 using MassTransit;
@@ -12,6 +14,8 @@ using MassTransit.EntityFrameworkCoreIntegration.Saga;
 using MassTransit.EntityFrameworkCoreIntegration.Saga.Context;
 using MassTransit.ExtensionsDependencyInjectionIntegration.ScopeProviders;
 using MassTransit.JobService.Components.StateMachines;
+using MassTransit.JobService.Configuration;
+using MassTransit.Registration;
 using MassTransit.Saga;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -47,15 +51,30 @@ namespace JobService.Service
                     m.MigrationsHistoryTable($"__{nameof(JobServiceSagaDbContext)}");
                 }));
 
-            services.AddSagaRepository<JobSaga>();
-            services.AddSagaRepository<JobTypeSaga>();
-            services.AddSagaRepository<JobAttemptSaga>();
-
             services.AddMassTransit(x =>
             {
                 x.AddRabbitMqMessageScheduler();
 
                 x.AddConsumer<ConvertVideoJobConsumer>(typeof(ConvertVideoJobConsumerDefinition));
+
+                x.AddSagaRepository<JobSaga>()
+                    .EntityFrameworkRepository(r =>
+                    {
+                        r.ExistingDbContext<JobServiceSagaDbContext>();
+                        r.LockStatementProvider = new PostgresLockStatementProvider();
+                    });
+                x.AddSagaRepository<JobTypeSaga>()
+                    .EntityFrameworkRepository(r =>
+                    {
+                        r.ExistingDbContext<JobServiceSagaDbContext>();
+                        r.LockStatementProvider = new PostgresLockStatementProvider();
+                    });
+                x.AddSagaRepository<JobAttemptSaga>()
+                    .EntityFrameworkRepository(r =>
+                    {
+                        r.ExistingDbContext<JobServiceSagaDbContext>();
+                        r.LockStatementProvider = new PostgresLockStatementProvider();
+                    });
 
                 x.AddServiceClient();
 
@@ -77,9 +96,7 @@ namespace JobService.Service
                         {
                             js.FinalizeCompleted = true;
 
-                            js.Repository = context.GetRequiredService<ISagaRepository<JobTypeSaga>>();
-                            js.JobRepository = context.GetRequiredService<ISagaRepository<JobSaga>>();
-                            js.JobAttemptRepository = context.GetRequiredService<ISagaRepository<JobAttemptSaga>>();
+                            js.ConfigureSagaRepositories(context);
                         });
 
                         instance.ConfigureEndpoints(context);
@@ -136,6 +153,29 @@ namespace JobService.Service
 
     public static class JobServiceStartupExtensions
     {
+        public static ISagaRegistrationConfigurator<T> AddSagaRepository<T>(this IRegistrationConfigurator configurator) where T : class, ISaga
+        {
+            if (configurator is RegistrationConfigurator registrationConfigurator)
+                return new SagaRegistrationConfigurator<T>(configurator, registrationConfigurator.Registrar);
+
+            throw new ArgumentException("The registrar must be available", nameof(configurator));
+        }
+
+        /// <summary>
+        /// Configure the job server saga repositories to resolve from the container.
+        /// </summary>
+        /// <param name="configurator"></param>
+        /// <param name="provider">The bus registration context provided during configuration</param>
+        /// <returns></returns>
+        public static IJobServiceConfigurator ConfigureSagaRepositories(this IJobServiceConfigurator configurator, IConfigurationServiceProvider provider)
+        {
+            configurator.Repository = provider.GetRequiredService<ISagaRepository<JobTypeSaga>>();
+            configurator.JobRepository = provider.GetRequiredService<ISagaRepository<JobSaga>>();
+            configurator.JobAttemptRepository = provider.GetRequiredService<ISagaRepository<JobAttemptSaga>>();
+
+            return configurator;
+        }
+
         public static void AddSagaRepository<TSaga>(this IServiceCollection services)
             where TSaga : class, ISaga
         {
