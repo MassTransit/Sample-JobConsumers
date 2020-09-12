@@ -1,8 +1,5 @@
-using System;
-using System.Data;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using JobService.Components;
 using MassTransit;
@@ -10,13 +7,7 @@ using MassTransit.Conductor;
 using MassTransit.Definition;
 using MassTransit.EntityFrameworkCoreIntegration;
 using MassTransit.EntityFrameworkCoreIntegration.JobService;
-using MassTransit.EntityFrameworkCoreIntegration.Saga;
-using MassTransit.EntityFrameworkCoreIntegration.Saga.Context;
-using MassTransit.ExtensionsDependencyInjectionIntegration.ScopeProviders;
 using MassTransit.JobService.Components.StateMachines;
-using MassTransit.JobService.Configuration;
-using MassTransit.Registration;
-using MassTransit.Saga;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -148,51 +139,6 @@ namespace JobService.Service
             context.Response.ContentType = "application/json";
 
             return context.Response.WriteAsync(json.ToString(Formatting.Indented));
-        }
-    }
-
-    public static class JobServiceStartupExtensions
-    {
-        public static ISagaRegistrationConfigurator<T> AddSagaRepository<T>(this IRegistrationConfigurator configurator) where T : class, ISaga
-        {
-            if (configurator is RegistrationConfigurator registrationConfigurator)
-                return new SagaRegistrationConfigurator<T>(configurator, registrationConfigurator.Registrar);
-
-            throw new ArgumentException("The registrar must be available", nameof(configurator));
-        }
-
-        /// <summary>
-        /// Configure the job server saga repositories to resolve from the container.
-        /// </summary>
-        /// <param name="configurator"></param>
-        /// <param name="provider">The bus registration context provided during configuration</param>
-        /// <returns></returns>
-        public static IJobServiceConfigurator ConfigureSagaRepositories(this IJobServiceConfigurator configurator, IConfigurationServiceProvider provider)
-        {
-            configurator.Repository = provider.GetRequiredService<ISagaRepository<JobTypeSaga>>();
-            configurator.JobRepository = provider.GetRequiredService<ISagaRepository<JobSaga>>();
-            configurator.JobAttemptRepository = provider.GetRequiredService<ISagaRepository<JobAttemptSaga>>();
-
-            return configurator;
-        }
-
-        public static void AddSagaRepository<TSaga>(this IServiceCollection services)
-            where TSaga : class, ISaga
-        {
-            var queryExecutor = new PessimisticLoadQueryExecutor<TSaga>(new PostgresLockStatementProvider(), null);
-
-            ISagaRepositoryLockStrategy<TSaga> lockStrategy = new PessimisticSagaRepositoryLockStrategy<TSaga>(queryExecutor, IsolationLevel.Serializable);
-
-            services.AddSingleton(lockStrategy);
-
-            services.AddScoped<ISagaConsumeContextFactory<DbContext, TSaga>, SagaConsumeContextFactory<DbContext, TSaga>>();
-            services.AddScoped<ISagaRepositoryContextFactory<TSaga>, EntityFrameworkSagaRepositoryContextFactory<TSaga>>();
-
-            services.AddSingleton<DependencyInjectionSagaRepositoryContextFactory<TSaga>>();
-            services.AddSingleton<ISagaRepository<TSaga>>(provider =>
-                new SagaRepository<TSaga>(provider.GetRequiredService<DependencyInjectionSagaRepositoryContextFactory<TSaga>>()));
-
-            services.AddScoped<ISagaDbContextFactory<TSaga>, ContainerSagaDbContextFactory<JobServiceSagaDbContext, TSaga>>();
         }
     }
 }
