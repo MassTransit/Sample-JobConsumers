@@ -12,10 +12,10 @@ namespace JobService.Service.Controllers
     public class ConvertVideoController :
         ControllerBase
     {
-        readonly IRequestClient<ConvertVideo> _client;
-        readonly ILogger<ConvertVideoController> _logger;
+        private readonly IRequestClient<IConvertVideo> _client;
+        private readonly ILogger<ConvertVideoController> _logger;
 
-        public ConvertVideoController(ILogger<ConvertVideoController> logger, IRequestClient<ConvertVideo> client)
+        public ConvertVideoController(ILogger<ConvertVideoController> logger, IRequestClient<IConvertVideo> client)
         {
             _logger = logger;
             _client = client;

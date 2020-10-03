@@ -2,18 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>d048bc10-7a4b-4e96-a906-ac9750b9ae52</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.5-develop.2955" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.0.5-develop.2955" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.5-develop.2955" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.5">
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.4" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.0.4" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.8">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.7.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NSwag.AspNetCore" Version="13.8.2" />
   </ItemGroup>
 
   <ItemGroup>
