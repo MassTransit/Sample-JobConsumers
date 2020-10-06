@@ -1,18 +1,15 @@
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using JobService.Components;
 using MassTransit;
 using MassTransit.Conductor;
+using MassTransit.Contracts.JobService;
 using MassTransit.Definition;
-using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.EntityFrameworkCoreIntegration.JobService;
 using MassTransit.JobService.Components.StateMachines;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -35,37 +32,18 @@ namespace JobService.Service
         {
             services.AddControllers();
 
-            services.AddDbContext<JobServiceSagaDbContext>(builder =>
-                builder.UseNpgsql(Configuration.GetConnectionString("JobService"), m =>
-                {
-                    m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
-                    m.MigrationsHistoryTable($"__{nameof(JobServiceSagaDbContext)}");
-                }));
-
             services.AddMassTransit(x =>
             {
-                x.AddRabbitMqMessageScheduler();
+                x.AddServiceBusMessageScheduler();
 
                 x.AddConsumer<ConvertVideoJobConsumer>(typeof(ConvertVideoJobConsumerDefinition));
 
                 x.AddSagaRepository<JobSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .MessageSessionRepository();
                 x.AddSagaRepository<JobTypeSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .MessageSessionRepository();
                 x.AddSagaRepository<JobAttemptSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .MessageSessionRepository();
 
                 x.AddServiceClient();
 
@@ -73,13 +51,47 @@ namespace JobService.Service
 
                 x.SetKebabCaseEndpointNameFormatter();
 
-                x.UsingRabbitMq((context, cfg) =>
+                x.UsingAzureServiceBus((context, cfg) =>
                 {
-                    cfg.UseRabbitMqMessageScheduler();
+                    cfg.Host(Configuration.GetConnectionString("AzureServiceBus"));
+
+                    cfg.Send<ConvertVideo>(t => t.UseSessionIdFormatter(m => m.RequestId?.ToString()));
+
+                    cfg.Send<SetConcurrentJobLimit>(t => t.UseSessionIdFormatter(m => m.Message.JobTypeId.ToString()));
+                    cfg.Send<AllocateJobSlot>(t => t.UseSessionIdFormatter(m => m.Message.JobTypeId.ToString()));
+                    cfg.Send<JobSlotReleased>(t => t.UseSessionIdFormatter(m => m.Message.JobTypeId.ToString()));
+
+                    cfg.Send<JobSubmitted>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+
+                    cfg.Send<JobSlotAllocated>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobSlotUnavailable>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<Fault<AllocateJobSlot>>(t => t.UseSessionIdFormatter(m => m.Message.Message.JobId.ToString()));
+
+                    cfg.Send<JobSlotWaitElapsed>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobRetryDelayElapsed>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+
+                    cfg.Send<JobAttemptCreated>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<Fault<StartJobAttempt>>(t => t.UseSessionIdFormatter(m => m.Message.Message.AttemptId.ToString()));
+
+                    cfg.Send<StartJobAttempt>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<Fault<StartJob>>(t => t.UseSessionIdFormatter(m => m.Message.Message.AttemptId.ToString()));
+
+                    cfg.Send<JobAttemptStarted>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobAttemptCompleted>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobAttemptCanceled>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobAttemptFaulted>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+                    cfg.Send<JobAttemptStatus>(t => t.UseSessionIdFormatter(m => m.Message.JobId.ToString()));
+
+                    cfg.Send<JobStatusCheckRequested>(t => t.UseSessionIdFormatter(m => m.Message.AttemptId.ToString()));
+
+                    cfg.UseServiceBusMessageScheduler();
 
                     var options = new ServiceInstanceOptions()
                         .EnableInstanceEndpoint()
                         .SetEndpointNameFormatter(KebabCaseEndpointNameFormatter.Instance);
+
+                    // used to set the RequiresSession property on the job service receive endpoints
+                    cfg.ConnectEndpointConfigurationObserver(new SessionEndpointConfigurationObserver());
 
                     cfg.ServiceInstance(options, instance =>
                     {

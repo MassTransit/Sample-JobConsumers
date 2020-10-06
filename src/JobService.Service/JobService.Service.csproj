@@ -5,15 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.5-develop.2955" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.0.5-develop.2955" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.5-develop.2955" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.5">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.7.1" />
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.5-develop.2968" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="7.0.5-develop.2968" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.8.2" />
   </ItemGroup>
 
   <ItemGroup>
