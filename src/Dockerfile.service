@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+WORKDIR /src
+COPY ["JobService.Service/JobService.Service.csproj", "JobService.Service/"]
+COPY ["JobService.Components/JobService.Components.csproj", "JobService.Components/"]
+RUN dotnet restore "JobService.Service/JobService.Service.csproj"
+
+COPY . .
+RUN dotnet publish -c Release -o /app JobService.Service/JobService.Service.csproj 
+
+FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS publish
+WORKDIR /app
+COPY --from=build /app ./
+ENTRYPOINT ["dotnet", "JobService.Service.dll"]

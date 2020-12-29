@@ -1,12 +1,13 @@
-﻿using System.Threading.Tasks;
-using JobService.Components;
-using MassTransit;
-using MassTransit.Contracts.JobService;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-
-namespace JobService.Service.Controllers
+﻿namespace JobService.Service.Controllers
 {
+    using System.Threading.Tasks;
+    using Components;
+    using MassTransit;
+    using MassTransit.Contracts.JobService;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging;
+
+
     [ApiController]
     [Route("[controller]")]
     public class ConvertVideoController :
@@ -26,10 +27,7 @@ namespace JobService.Service.Controllers
         {
             _logger.LogInformation("Sending job: {Path}", path);
 
-            var response = await _client.GetResponse<JobSubmissionAccepted>(new
-            {
-                Path = path
-            });
+            Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new {Path = path});
 
             return Ok(new
             {

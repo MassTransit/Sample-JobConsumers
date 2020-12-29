@@ -1,6 +1,6 @@
-﻿version: '2.3'
+﻿version: "3.6"
 services:
-  rabbit:
+  rabbitmq:
     image: masstransit/rabbitmq:latest
     ports:
       - "5672:5672"
@@ -11,3 +11,12 @@ services:
       - "POSTGRES_PASSWORD=Password12!"
     ports:
       - 5432:5432
+  service:
+    image: jobservice/service
+    build:
+      context: ./src
+      dockerfile: Dockerfile.service
+    restart: always      
+    ports:
+     - "5000:80"
+     - "5001:81"

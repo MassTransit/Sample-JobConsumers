@@ -1,27 +1,40 @@
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
-using JobService.Components;
-using MassTransit;
-using MassTransit.Conductor;
-using MassTransit.Definition;
-using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.EntityFrameworkCoreIntegration.JobService;
-using MassTransit.JobService.Components.StateMachines;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 
 namespace JobService.Service
 {
+    using System;
+    using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
+    using Components;
+    using MassTransit;
+    using MassTransit.Conductor;
+    using MassTransit.Definition;
+    using MassTransit.EntityFrameworkCoreIntegration;
+    using MassTransit.EntityFrameworkCoreIntegration.JobService;
+    using MassTransit.JobService.Components.StateMachines;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Diagnostics.HealthChecks;
+    using Microsoft.Extensions.Hosting;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -63,6 +76,8 @@ namespace JobService.Service
                 x.AddSagaRepository<JobAttemptSaga>()
                     .EntityFrameworkRepository(r =>
                     {
+                        r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
+
                         r.ExistingDbContext<JobServiceSagaDbContext>();
                         r.LockStatementProvider = new PostgresLockStatementProvider();
                     });
@@ -75,6 +90,9 @@ namespace JobService.Service
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
+                    if (IsRunningInContainer)
+                        cfg.Host("rabbitmq");
+
                     cfg.UseRabbitMqMessageScheduler();
 
                     var options = new ServiceInstanceOptions()
@@ -85,6 +103,9 @@ namespace JobService.Service
                     {
                         instance.ConfigureJobServiceEndpoints(js =>
                         {
+                            js.SagaPartitionCount = 16;
+                            js.FinalizeCompleted = true;
+
                             js.FinalizeCompleted = true;
 
                             js.ConfigureSagaRepositories(context);
@@ -101,9 +122,8 @@ namespace JobService.Service
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
-
-            app.UseHttpsRedirection();
+            if (env.IsDevelopment())
+                app.UseDeveloperExceptionPage();
 
             app.UseRouting();
 
@@ -126,7 +146,6 @@ namespace JobService.Service
             });
         }
 
-
         static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
         {
             var json = new JObject(
@@ -140,5 +159,10 @@ namespace JobService.Service
 
             return context.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
+
+        static bool? _isRunningInContainer;
+
+        public static bool IsRunningInContainer =>
+            _isRunningInContainer ??= bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out var inDocker) && inDocker;
     }
 }

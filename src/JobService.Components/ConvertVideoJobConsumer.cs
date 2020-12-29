@@ -1,10 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using MassTransit.JobService;
-using Microsoft.Extensions.Logging;
-
-namespace JobService.Components
+﻿namespace JobService.Components
 {
+    using System;
+    using System.Threading.Tasks;
+    using MassTransit.JobService;
+    using Microsoft.Extensions.Logging;
+
+
     public class ConvertVideoJobConsumer :
         IJobConsumer<ConvertVideo>
     {
