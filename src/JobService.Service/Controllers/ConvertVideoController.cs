@@ -1,7 +1,9 @@
 ﻿namespace JobService.Service.Controllers
 {
+    using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
-    using Components;
+    using JobService.Components;
     using MassTransit;
     using MassTransit.Contracts.JobService;
     using Microsoft.AspNetCore.Mvc;
@@ -27,13 +29,46 @@
         {
             _logger.LogInformation("Sending job: {Path}", path);
 
-            Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new {Path = path});
+            var groupId = NewId.Next().ToString();
+
+            Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new
+            {
+                path,
+                groupId,
+                Index = 0,
+                Count = 1
+            });
 
             return Ok(new
             {
                 response.Message.JobId,
                 Path = path
             });
+        }
+
+        [HttpGet("{count}")]
+        public async Task<IActionResult> Get(int count)
+        {
+            var jobIds = new List<Guid>(count);
+
+            var groupId = NewId.Next().ToString();
+
+            for (var i = 0; i < count; i++)
+            {
+                var path = NewId.Next() + ".txt";
+
+                Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new
+                {
+                    path,
+                    groupId,
+                    Index = i,
+                    count
+                });
+
+                jobIds.Add(response.Message.JobId);
+            }
+
+            return Ok(new {jobIds});
         }
     }
 }

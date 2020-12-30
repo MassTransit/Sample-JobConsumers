@@ -1,14 +1,3 @@
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
-
-
 namespace JobService.Service
 {
     using System;
@@ -16,6 +5,7 @@ namespace JobService.Service
     using System.Reflection;
     using System.Threading.Tasks;
     using Components;
+    using JobService.Components;
     using MassTransit;
     using MassTransit.Conductor;
     using MassTransit.Definition;
@@ -37,12 +27,17 @@ namespace JobService.Service
 
     public class Startup
     {
+        static bool? _isRunningInContainer;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
+
+        public static bool IsRunningInContainer =>
+            _isRunningInContainer ??= bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out var inDocker) && inDocker;
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -61,6 +56,8 @@ namespace JobService.Service
 
                 x.AddConsumer<ConvertVideoJobConsumer>(typeof(ConvertVideoJobConsumerDefinition));
 
+                x.AddConsumer<VideoConvertedConsumer>();
+
                 x.AddSagaRepository<JobSaga>()
                     .EntityFrameworkRepository(r =>
                     {
@@ -76,8 +73,6 @@ namespace JobService.Service
                 x.AddSagaRepository<JobAttemptSaga>()
                     .EntityFrameworkRepository(r =>
                     {
-                        r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
-
                         r.ExistingDbContext<JobServiceSagaDbContext>();
                         r.LockStatementProvider = new PostgresLockStatementProvider();
                     });
@@ -103,9 +98,7 @@ namespace JobService.Service
                     {
                         instance.ConfigureJobServiceEndpoints(js =>
                         {
-                            js.SagaPartitionCount = 16;
-                            js.FinalizeCompleted = true;
-
+                            js.SagaPartitionCount = 1;
                             js.FinalizeCompleted = true;
 
                             js.ConfigureSagaRepositories(context);
@@ -159,10 +152,5 @@ namespace JobService.Service
 
             return context.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
-
-        static bool? _isRunningInContainer;
-
-        public static bool IsRunningInContainer =>
-            _isRunningInContainer ??= bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out var inDocker) && inDocker;
     }
 }

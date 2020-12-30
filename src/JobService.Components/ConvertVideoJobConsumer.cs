@@ -18,11 +18,13 @@
 
         public async Task Run(JobContext<ConvertVideo> context)
         {
-            _logger.LogInformation("Converting video: {Path}", context.Job.Path);
+            var rng = new Random();
 
-            await Task.Delay(TimeSpan.FromSeconds(15));
+            var variance = TimeSpan.FromMilliseconds(rng.Next(4399, 18377));
 
-            _logger.LogInformation("Converted video: {Path}", context.Job.Path);
+            await Task.Delay(variance);
+
+            await context.Publish<VideoConverted>(context.Job);
         }
     }
 }
