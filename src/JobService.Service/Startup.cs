@@ -2,21 +2,18 @@ namespace JobService.Service
 {
     using System;
     using System.Linq;
-    using System.Reflection;
     using System.Threading.Tasks;
     using Components;
     using JobService.Components;
     using MassTransit;
     using MassTransit.Conductor;
     using MassTransit.Definition;
-    using MassTransit.EntityFrameworkCoreIntegration;
-    using MassTransit.EntityFrameworkCoreIntegration.JobService;
     using MassTransit.JobService.Components.StateMachines;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
-    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Azure.Cosmos.Table;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -42,40 +39,30 @@ namespace JobService.Service
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-
-            services.AddDbContext<JobServiceSagaDbContext>(builder =>
-                builder.UseNpgsql(Configuration.GetConnectionString("JobService"), m =>
-                {
-                    m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
-                    m.MigrationsHistoryTable($"__{nameof(JobServiceSagaDbContext)}");
-                }));
+            
+            var storageAccount = CloudStorageAccount.Parse(Configuration.GetConnectionString("AzureTable"));
+            var sagaTableClient = storageAccount.CreateCloudTableClient();
+            var jobsTable = sagaTableClient.GetTableReference("aaaajobs");
+            jobsTable.CreateIfNotExists();
+            var jobTypeTable = sagaTableClient.GetTableReference("aaaajobtype");
+            jobTypeTable.CreateIfNotExists();
+            var jobattemptTable = sagaTableClient.GetTableReference("aaaajobattempt");
+            jobattemptTable.CreateIfNotExists();
 
             services.AddMassTransit(x =>
             {
-                x.AddRabbitMqMessageScheduler();
-
+                x.AddServiceBusMessageScheduler();
+                
                 x.AddConsumer<ConvertVideoJobConsumer>(typeof(ConvertVideoJobConsumerDefinition));
 
                 x.AddConsumer<VideoConvertedConsumer>();
 
                 x.AddSagaRepository<JobSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .AzureTableRepository(cfg => { cfg.ConnectionFactory(() => jobsTable); });
                 x.AddSagaRepository<JobTypeSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .AzureTableRepository(cfg => { cfg.ConnectionFactory(() => jobTypeTable); });
                 x.AddSagaRepository<JobAttemptSaga>()
-                    .EntityFrameworkRepository(r =>
-                    {
-                        r.ExistingDbContext<JobServiceSagaDbContext>();
-                        r.LockStatementProvider = new PostgresLockStatementProvider();
-                    });
+                    .AzureTableRepository(cfg => { cfg.ConnectionFactory(() => jobattemptTable); });
 
                 x.AddServiceClient();
 
@@ -83,12 +70,14 @@ namespace JobService.Service
 
                 x.SetKebabCaseEndpointNameFormatter();
 
-                x.UsingRabbitMq((context, cfg) =>
+                x.UsingAzureServiceBus((context, cfg) =>
                 {
-                    if (IsRunningInContainer)
-                        cfg.Host("rabbitmq");
+                    cfg.Host(Configuration.GetConnectionString("AzureServiceBus"), h =>
+                    {
+                        h.OperationTimeout = TimeSpan.FromSeconds(60);
+                    });
 
-                    cfg.UseRabbitMqMessageScheduler();
+                    cfg.UseServiceBusMessageScheduler();
 
                     var options = new ServiceInstanceOptions()
                         .EnableInstanceEndpoint()
