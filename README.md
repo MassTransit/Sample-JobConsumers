@@ -1,3 +1,12 @@
 # Job Consumer Sample
 
-Use the `docker-compose.yml` file to startup RabbitMQ and Postgres, then run the service. Navigate to `https://localhost:5001/swagger` to post a video to convert. Enjoy the show!
+To run the app update the connection strings within appsettings.json and run the service application.
+
+Navigate to https://localhost:5001 and hit the POST.
+
+``` json
+  "ConnectionStrings": {
+    "AzureServiceBus": "<ADDASBConnectionStringHere>",
+    "AzureTable": "<AddTableConnectionStringHere>"
+  }
+```
