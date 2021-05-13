@@ -3,15 +3,17 @@ using System;
 using MassTransit.EntityFrameworkCoreIntegration.JobService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace JobService.Service.Migrations
 {
     [DbContext(typeof(JobServiceSagaDbContext))]
-    partial class JobServiceSagaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210513021006_v720update")]
+    partial class v720update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

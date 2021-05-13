@@ -5,14 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.AspNetCore" Version="7.1.1" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.1.1" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.10">
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.2.0-develop.82" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="7.2.0-develop.82" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="7.2.0-develop.82" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.11">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.11" />
     <PackageReference Include="NSwag.AspNetCore" Version="13.9.4" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />

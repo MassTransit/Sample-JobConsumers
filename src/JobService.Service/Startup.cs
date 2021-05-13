@@ -7,11 +7,11 @@ namespace JobService.Service
     using Components;
     using JobService.Components;
     using MassTransit;
-    using MassTransit.Conductor;
     using MassTransit.Definition;
     using MassTransit.EntityFrameworkCoreIntegration;
     using MassTransit.EntityFrameworkCoreIntegration.JobService;
     using MassTransit.JobService.Components.StateMachines;
+    using MassTransit.JobService.Configuration;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
     using Microsoft.AspNetCore.Hosting;
@@ -52,7 +52,7 @@ namespace JobService.Service
 
             services.AddMassTransit(x =>
             {
-                x.AddRabbitMqMessageScheduler();
+                x.AddDelayedMessageScheduler();
 
                 x.AddConsumer<ConvertVideoJobConsumer>(typeof(ConvertVideoJobConsumerDefinition));
 
@@ -77,8 +77,6 @@ namespace JobService.Service
                         r.LockStatementProvider = new PostgresLockStatementProvider();
                     });
 
-                x.AddServiceClient();
-
                 x.AddRequestClient<ConvertVideo>();
 
                 x.SetKebabCaseEndpointNameFormatter();
@@ -88,11 +86,10 @@ namespace JobService.Service
                     if (IsRunningInContainer)
                         cfg.Host("rabbitmq");
 
-                    cfg.UseRabbitMqMessageScheduler();
+                    cfg.UseDelayedMessageScheduler();
 
                     var options = new ServiceInstanceOptions()
-                        .EnableInstanceEndpoint()
-                        .SetEndpointNameFormatter(KebabCaseEndpointNameFormatter.Instance);
+                        .SetEndpointNameFormatter(context.GetService<IEndpointNameFormatter>() ?? KebabCaseEndpointNameFormatter.Instance);
 
                     cfg.ServiceInstance(options, instance =>
                     {
@@ -102,10 +99,12 @@ namespace JobService.Service
                             js.FinalizeCompleted = true;
 
                             js.ConfigureSagaRepositories(context);
+
+                            cfg.ConfigureEndpoints(context);
                         });
 
-                        instance.ConfigureEndpoints(context);
                     });
+
                 });
             });
             services.AddMassTransitHostedService();

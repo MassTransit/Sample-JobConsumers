@@ -16,7 +16,6 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile.service
-    restart: always      
     ports:
      - "5000:80"
      - "5001:81"
