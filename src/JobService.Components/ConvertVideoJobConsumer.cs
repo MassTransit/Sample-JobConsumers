@@ -20,7 +20,7 @@
         {
             var rng = new Random();
 
-            var variance = TimeSpan.FromMilliseconds(rng.Next(4399, 18377));
+            var variance = TimeSpan.FromMilliseconds(rng.Next(8399, 28377));
 
             await Task.Delay(variance);
 

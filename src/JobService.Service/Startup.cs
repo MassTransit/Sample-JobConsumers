@@ -99,12 +99,10 @@ namespace JobService.Service
                             js.FinalizeCompleted = true;
 
                             js.ConfigureSagaRepositories(context);
-
-                            cfg.ConfigureEndpoints(context);
                         });
 
+                        instance.ConfigureEndpoints(context);
                     });
-
                 });
             });
             services.AddMassTransitHostedService();
