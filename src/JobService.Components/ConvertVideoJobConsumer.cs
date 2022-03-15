@@ -2,7 +2,7 @@
 {
     using System;
     using System.Threading.Tasks;
-    using MassTransit.JobService;
+    using MassTransit;
     using Microsoft.Extensions.Logging;
 
 

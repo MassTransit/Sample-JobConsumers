@@ -7,11 +7,7 @@ namespace JobService.Service
     using Components;
     using JobService.Components;
     using MassTransit;
-    using MassTransit.Definition;
     using MassTransit.EntityFrameworkCoreIntegration;
-    using MassTransit.EntityFrameworkCoreIntegration.JobService;
-    using MassTransit.JobService.Components.StateMachines;
-    using MassTransit.JobService.Configuration;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
     using Microsoft.AspNetCore.Hosting;
@@ -105,7 +101,6 @@ namespace JobService.Service
                     });
                 });
             });
-            services.AddMassTransitHostedService();
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Convert Video Service");
         }
