@@ -10,14 +10,14 @@ namespace JobService.Service.Components
     using Microsoft.Extensions.Logging;
 
 
-    public class VideoConvertedConsumer :
+    public class TrackVideoConvertedConsumer :
         IConsumer<VideoConverted>
     {
         static readonly ConcurrentDictionary<string, GroupInfo> _groupInfo = new();
 
-        readonly ILogger<VideoConvertedConsumer> _logger;
+        readonly ILogger<TrackVideoConvertedConsumer> _logger;
 
-        public VideoConvertedConsumer(ILogger<VideoConvertedConsumer> logger)
+        public TrackVideoConvertedConsumer(ILogger<TrackVideoConvertedConsumer> logger)
         {
             _logger = logger;
         }

@@ -7,21 +7,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
+#nullable disable
+
 namespace JobService.Service.Migrations
 {
     [DbContext(typeof(JobServiceSagaDbContext))]
-    [Migration("20200911130132_AddedJobService")]
-    partial class AddedJobService
+    [Migration("20221123162217_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.5")
+                .HasAnnotation("ProductVersion", "6.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobAttemptSaga", b =>
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MassTransit.JobAttemptSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
@@ -58,7 +61,7 @@ namespace JobService.Service.Migrations
                     b.ToTable("JobAttemptSaga");
                 });
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobSaga", b =>
+            modelBuilder.Entity("MassTransit.JobSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
@@ -113,7 +116,7 @@ namespace JobService.Service.Migrations
                     b.ToTable("JobSaga");
                 });
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobTypeSaga", b =>
+            modelBuilder.Entity("MassTransit.JobTypeSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
@@ -129,6 +132,9 @@ namespace JobService.Service.Migrations
 
                     b.Property<int>("CurrentState")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Instances")
+                        .HasColumnType("text");
 
                     b.Property<int?>("OverrideJobLimit")
                         .HasColumnType("integer");

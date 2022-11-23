@@ -15,28 +15,31 @@
     public class ConvertVideoController :
         ControllerBase
     {
-        readonly IRequestClient<ConvertVideo> _client;
         readonly ILogger<ConvertVideoController> _logger;
 
         public ConvertVideoController(ILogger<ConvertVideoController> logger, IRequestClient<ConvertVideo> client)
         {
             _logger = logger;
-            _client = client;
         }
 
         [HttpPost("{path}")]
-        public async Task<IActionResult> Get(string path)
+        public async Task<IActionResult> SubmitJob(string path, [FromServices] IRequestClient<ConvertVideo> client)
         {
             _logger.LogInformation("Sending job: {Path}", path);
 
             var groupId = NewId.Next().ToString();
 
-            Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new
+            Response<JobSubmissionAccepted> response = await client.GetResponse<JobSubmissionAccepted>(new
             {
                 path,
                 groupId,
                 Index = 0,
-                Count = 1
+                Count = 1,
+                Details = new List<VideoDetail>
+                {
+                    new() { Value = "first" },
+                    new() { Value = "second" }
+                }
             });
 
             return Ok(new
@@ -46,8 +49,36 @@
             });
         }
 
-        [HttpGet("{count}")]
-        public async Task<IActionResult> Get(int count)
+        [HttpPut("{path}")]
+        public async Task<IActionResult> FireAndForgetSubmitJob(string path, [FromServices] IPublishEndpoint publishEndpoint)
+        {
+            _logger.LogInformation("Sending job: {Path}", path);
+
+            var jobId = NewId.NextGuid();
+            var groupId = NewId.Next().ToString();
+
+            await publishEndpoint.Publish<SubmitJob<ConvertVideo>>(new
+            {
+                JobId = jobId,
+                Job = new
+                {
+                    path,
+                    groupId,
+                    Index = 0,
+                    Count = 1,
+                    Details = new VideoDetail[] { new() { Value = "first" }, new() { Value = "second" } }
+                }
+            });
+
+            return Ok(new
+            {
+                jobId,
+                Path = path
+            });
+        }
+
+        [HttpPost("{count:int}")]
+        public async Task<IActionResult> SubmitJob(int count, [FromServices] IRequestClient<ConvertVideo> client)
         {
             var jobIds = new List<Guid>(count);
 
@@ -57,7 +88,7 @@
             {
                 var path = NewId.Next() + ".txt";
 
-                Response<JobSubmissionAccepted> response = await _client.GetResponse<JobSubmissionAccepted>(new
+                Response<JobSubmissionAccepted> response = await client.GetResponse<JobSubmissionAccepted>(new
                 {
                     path,
                     groupId,
@@ -68,7 +99,35 @@
                 jobIds.Add(response.Message.JobId);
             }
 
-            return Ok(new {jobIds});
+            return Ok(new { jobIds });
+        }
+
+        [HttpGet("{jobId:guid}")]
+        public async Task<IActionResult> GetJobState(Guid jobId, [FromServices] IRequestClient<GetJobState> client)
+        {
+            try
+            {
+                Response<JobState> response = await client.GetResponse<JobState>(new
+                {
+                    jobId,
+                });
+
+                return Ok(new
+                {
+                    jobId,
+                    response.Message.CurrentState,
+                    response.Message.Submitted,
+                    response.Message.Started,
+                    response.Message.Completed,
+                    response.Message.Faulted,
+                    response.Message.Reason,
+                    response.Message.LastRetryAttempt,
+                });
+            }
+            catch (Exception)
+            {
+                return NotFound();
+            }
         }
     }
 }

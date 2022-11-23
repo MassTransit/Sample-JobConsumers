@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
+#nullable disable
+
 namespace JobService.Service.Migrations
 {
     [DbContext(typeof(JobServiceSagaDbContext))]
@@ -15,11 +17,12 @@ namespace JobService.Service.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.11")
+                .HasAnnotation("ProductVersion", "6.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobAttemptSaga", b =>
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MassTransit.JobAttemptSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
@@ -56,7 +59,7 @@ namespace JobService.Service.Migrations
                     b.ToTable("JobAttemptSaga");
                 });
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobSaga", b =>
+            modelBuilder.Entity("MassTransit.JobSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
@@ -111,7 +114,7 @@ namespace JobService.Service.Migrations
                     b.ToTable("JobSaga");
                 });
 
-            modelBuilder.Entity("MassTransit.JobService.Components.StateMachines.JobTypeSaga", b =>
+            modelBuilder.Entity("MassTransit.JobTypeSaga", b =>
                 {
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid");
