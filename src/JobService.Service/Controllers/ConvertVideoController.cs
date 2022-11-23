@@ -17,7 +17,7 @@
     {
         readonly ILogger<ConvertVideoController> _logger;
 
-        public ConvertVideoController(ILogger<ConvertVideoController> logger, IRequestClient<ConvertVideo> client)
+        public ConvertVideoController(ILogger<ConvertVideoController> logger)
         {
             _logger = logger;
         }
