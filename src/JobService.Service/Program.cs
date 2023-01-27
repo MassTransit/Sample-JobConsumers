@@ -65,7 +65,8 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddDelayedMessageScheduler();
 
-    x.AddConsumer<ConvertVideoJobConsumer, ConvertVideoJobConsumerDefinition>();
+    x.AddConsumer<ConvertVideoJobConsumer, ConvertVideoJobConsumerDefinition>()
+        .Endpoint(e => e.Name = "convert-job-queue");
 
     x.AddConsumer<TrackVideoConvertedConsumer>();
 
