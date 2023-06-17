@@ -6,8 +6,7 @@
     using Microsoft.Extensions.Logging;
 
 
-    public class ConvertVideoJobConsumer :
-        IJobConsumer<ConvertVideo>
+    public class ConvertVideoJobConsumer : IJobConsumer<ConvertVideo>
     {
         readonly ILogger<ConvertVideoJobConsumer> _logger;
 
@@ -23,11 +22,11 @@
             var variance = TimeSpan.FromMilliseconds(rng.Next(8399, 28377));
 
             _logger.LogInformation("Converting Video: {GroupId} {Path}", context.Job.GroupId, context.Job.Path);
-            
+
             await Task.Delay(variance);
 
             await context.Publish<VideoConverted>(context.Job);
-            
+
             _logger.LogInformation("Converted Video: {GroupId} {Path}", context.Job.GroupId, context.Job.Path);
         }
     }

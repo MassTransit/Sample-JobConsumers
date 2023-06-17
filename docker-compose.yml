@@ -1,21 +1,37 @@
-﻿version: "3.6"
+﻿version: "3.9"
 services:
   rabbitmq:
+    container_name: "JobService.RabbitMQ"
     image: masstransit/rabbitmq:latest
     ports:
       - "5672:5672"
       - "15672:15672"
   postgres:
-    image: "postgres:9.6"
+    container_name: "JobService.Postgres"
+    image: "postgres:14.7"
     environment:
       - "POSTGRES_PASSWORD=Password12!"
     ports:
-      - 5432:5432
-  service:
+      - "5432:5432"
+  jobservice:
+    restart: on-failure
+    container_name: "JobService.Service"
     image: jobservice/service
+    depends_on:
+      - rabbitmq
+      - postgres
     build:
-      context: ./src
-      dockerfile: Dockerfile.service
+      context: .
+      dockerfile: ./src/JobService.Service/Dockerfile
     ports:
-     - "5000:80"
-     - "5001:81"
+      - "5000:80"
+      - "5001:443"
+    environment:
+      - CONNECTIONSTRINGS__JOBSERVICE=server=postgres;port=5432;user id=postgres;password=Password12!;database=JobService;
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_HTTPS_PORT=5001
+    volumes:
+      - ~/.aspnet/https:/https:ro
