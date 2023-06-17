@@ -6,20 +6,37 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      # "test: rabbitmq-diagnostics check_port_connectivity" does not work with masstransit/rabbitmq
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+  
   postgres:
     container_name: "JobService.Postgres"
     image: "postgres:14.7"
     environment:
+      - "POSTGRES_USER=postgres"
       - "POSTGRES_PASSWORD=Password12!"
+      - "POSTGRES_DB=JobService"
     ports:
       - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+  
   jobservice:
     restart: on-failure
     container_name: "JobService.Service"
     image: jobservice/service
     depends_on:
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     build:
       context: .
       dockerfile: ./src/JobService.Service/Dockerfile
