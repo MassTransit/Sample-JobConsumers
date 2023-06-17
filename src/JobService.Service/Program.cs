@@ -6,7 +6,6 @@ using JobService.Service;
 using JobService.Service.Components;
 using MassTransit;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.Metadata;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
