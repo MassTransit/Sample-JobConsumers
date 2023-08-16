@@ -69,19 +69,8 @@ builder.Services.AddMassTransit(x =>
 
     x.AddConsumer<TrackVideoConvertedConsumer>();
 
-    x.AddSagaRepository<JobSaga>()
-        .EntityFrameworkRepository(r =>
-        {
-            r.ExistingDbContext<JobServiceSagaDbContext>();
-            r.UsePostgres();
-        });
-    x.AddSagaRepository<JobTypeSaga>()
-        .EntityFrameworkRepository(r =>
-        {
-            r.ExistingDbContext<JobServiceSagaDbContext>();
-            r.UsePostgres();
-        });
-    x.AddSagaRepository<JobAttemptSaga>()
+    x.SetJobConsumerOptions();
+    x.AddJobSagaStateMachines(options => options.FinalizeCompleted = false)
         .EntityFrameworkRepository(r =>
         {
             r.ExistingDbContext<JobServiceSagaDbContext>();
@@ -94,24 +83,6 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.UseDelayedMessageScheduler();
 
-        var options = new ServiceInstanceOptions()
-            .SetEndpointNameFormatter(context.GetService<IEndpointNameFormatter>() ?? KebabCaseEndpointNameFormatter.Instance);
-
-        cfg.ServiceInstance(options, instance =>
-        {
-            instance.ConfigureJobServiceEndpoints(js =>
-            {
-                js.SagaPartitionCount = 1;
-                js.FinalizeCompleted = false; // for demo purposes, to get state
-
-                js.ConfigureSagaRepositories(context);
-            });
-
-            // configure the job consumer on the job service endpoints
-            instance.ConfigureEndpoints(context, f => f.Include<ConvertVideoJobConsumer>());
-        });
-
-        // Configure the remaining consumers
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -130,9 +101,7 @@ builder.Services.AddOptions<HostOptions>()
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
     app.UseDeveloperExceptionPage();
-}
 
 app.UseOpenApi();
 app.UseSwaggerUi3();
@@ -140,25 +109,21 @@ app.UseSwaggerUi3();
 app.UseRouting();
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints =>
+static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
 {
-    static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
-    {
-        context.Response.ContentType = "application/json";
+    context.Response.ContentType = "application/json";
 
-        return context.Response.WriteAsync(result.ToJsonString());
-    }
+    return context.Response.WriteAsync(result.ToJsonString());
+}
 
-    endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
-    {
-        Predicate = check => check.Tags.Contains("ready"),
-        ResponseWriter = HealthCheckResponseWriter
-    });
-
-    endpoints.MapHealthChecks("/health/live", new HealthCheckOptions { ResponseWriter = HealthCheckResponseWriter });
-
-    endpoints.MapControllers();
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = HealthCheckResponseWriter
 });
-;
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions { ResponseWriter = HealthCheckResponseWriter });
+
+app.MapControllers();
 
 await app.RunAsync();

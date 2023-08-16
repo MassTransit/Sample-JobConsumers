@@ -2,9 +2,19 @@
 
 Generate certificate and configure local machine:
 
+PC:
+
 ```PowerShell
 dotnet dev-certs https --clean
-dotnet dev-certs https -ep "$env:USERPROFILE\.aspnet\https\aspnetapp.pfx" -p password
+dotnet dev-certs https -ep "$env:USERPROFILE\.aspnet\https\aspnetapp.pfx" -p Passw0rd
+dotnet dev-certs https --trust
+```
+
+MAC:
+
+```
+dotnet dev-certs https --clean
+dotnet dev-certs https -ep ~/.aspnet/https/aspnetapp.pfx -p Passw0rd
 dotnet dev-certs https --trust
 ```
 
