@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace JobService.Service.Migrations
 {
+    /// <inheritdoc />
     public partial class Initial : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -62,6 +64,7 @@ namespace JobService.Service.Migrations
                     CurrentState = table.Column<int>(type: "integer", nullable: false),
                     ActiveJobCount = table.Column<int>(type: "integer", nullable: false),
                     ConcurrentJobLimit = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
                     OverrideJobLimit = table.Column<int>(type: "integer", nullable: true),
                     OverrideLimitExpiration = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     ActiveJobs = table.Column<string>(type: "text", nullable: true),
@@ -79,6 +82,7 @@ namespace JobService.Service.Migrations
                 unique: true);
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
