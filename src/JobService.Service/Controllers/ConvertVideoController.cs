@@ -23,28 +23,28 @@
         }
 
         [HttpPost("{path}")]
-        public async Task<IActionResult> SubmitJob(string path, [FromServices] IRequestClient<ConvertVideo> client)
+        public async Task<IActionResult> SubmitJob(string path, [FromServices] IRequestClient<SubmitJob<ConvertVideo>> client)
         {
             _logger.LogInformation("Sending job: {Path}", path);
 
             var groupId = NewId.Next().ToString();
 
-            Response<JobSubmissionAccepted> response = await client.GetResponse<JobSubmissionAccepted>(new
+            var jobId = await client.SubmitJob(new ConvertVideo
             {
-                path,
-                groupId,
+                Path = path,
+                GroupId = groupId,
                 Index = 0,
                 Count = 1,
-                Details = new List<VideoDetail>
-                {
+                Details =
+                [
                     new() { Value = "first" },
                     new() { Value = "second" }
-                }
-            });
+                ]
+            }, x => x.Headers.Set("DataCenter", "EAST"));
 
             return Ok(new
             {
-                response.Message.JobId,
+                jobId,
                 Path = path
             });
         }
@@ -54,25 +54,24 @@
         {
             _logger.LogInformation("Sending job: {Path}", path);
 
-            var jobId = NewId.NextGuid();
             var groupId = NewId.Next().ToString();
 
-            await publishEndpoint.Publish<SubmitJob<ConvertVideo>>(new
+            var jobId = await publishEndpoint.ScheduleJob(DateTime.UtcNow.AddSeconds(10), new ConvertVideo
             {
-                JobId = jobId,
-                Job = new
-                {
-                    path,
-                    groupId,
-                    Index = 0,
-                    Count = 1,
-                    Details = new VideoDetail[] { new() { Value = "first" }, new() { Value = "second" } }
-                }
+                Path = path,
+                GroupId = groupId,
+                Index = 0,
+                Count = 1,
+                Details =
+                [
+                    new() { Value = "first" },
+                    new() { Value = "second" }
+                ]
             });
 
             return Ok(new
             {
-                jobId,
+                result = jobId,
                 Path = path
             });
         }
@@ -88,15 +87,15 @@
             {
                 var path = NewId.Next() + ".txt";
 
-                Response<JobSubmissionAccepted> response = await client.GetResponse<JobSubmissionAccepted>(new
+                var jobId = await client.SubmitJob(new ConvertVideo
                 {
-                    path,
-                    groupId,
+                    Path = path,
+                    GroupId = groupId,
                     Index = i,
-                    count
+                    Count = count,
                 });
 
-                jobIds.Add(response.Message.JobId);
+                jobIds.Add(jobId);
             }
 
             return Ok(new { jobIds });
@@ -107,27 +106,40 @@
         {
             try
             {
-                Response<JobState> response = await client.GetResponse<JobState>(new
-                {
-                    jobId,
-                });
+                var jobState = await client.GetJobState(jobId);
 
                 return Ok(new
                 {
                     jobId,
-                    response.Message.CurrentState,
-                    response.Message.Submitted,
-                    response.Message.Started,
-                    response.Message.Completed,
-                    response.Message.Faulted,
-                    response.Message.Reason,
-                    response.Message.LastRetryAttempt,
+                    jobState.CurrentState,
+                    jobState.Submitted,
+                    jobState.Started,
+                    jobState.Completed,
+                    jobState.Faulted,
+                    jobState.Reason,
+                    jobState.LastRetryAttempt,
                 });
             }
             catch (Exception)
             {
                 return NotFound();
             }
+        }
+
+        [HttpDelete("{jobId:guid}")]
+        public async Task<IActionResult> CancelJob(Guid jobId, [FromServices] IPublishEndpoint publishEndpoint)
+        {
+            await publishEndpoint.CancelJob(jobId, "User Request");
+
+            return Ok();
+        }
+
+        [HttpPost("{jobId:guid}")]
+        public async Task<IActionResult> RetryJob(Guid jobId, [FromServices] IPublishEndpoint publishEndpoint)
+        {
+            await publishEndpoint.RetryJob(jobId);
+
+            return Ok();
         }
     }
 }

@@ -10,6 +10,6 @@ namespace JobService.Components
         public int Count { get; init; }
         public string? Path { get; init; }
 
-        ICollection<VideoDetail>? Details { get; init; } = new List<VideoDetail>();
+        public ICollection<VideoDetail>? Details { get; init; } = new List<VideoDetail>();
     }
 }

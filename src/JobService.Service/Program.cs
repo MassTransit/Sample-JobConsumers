@@ -20,7 +20,7 @@ using Serilog.Events;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
-    .MinimumLevel.Override("MassTransit", LogEventLevel.Debug)
+    .MinimumLevel.Override("MassTransit", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.Hosting", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
@@ -47,10 +47,18 @@ builder.Services.AddOpenApiDocument(cfg => cfg.PostProcess = d =>
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+var connectionString = builder.Configuration.GetConnectionString("JobService");
+
+builder.Services.AddOptions<SqlTransportOptions>()
+    .Configure(options =>
+    {
+        options.ConnectionString = connectionString;
+    });
+
+builder.Services.AddPostgresMigrationHostedService();
+
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("JobService");
-
     optionsBuilder.UseNpgsql(connectionString, m =>
     {
         m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
@@ -62,15 +70,20 @@ builder.Services.AddHostedService<MigrationHostedService<JobServiceSagaDbContext
 
 builder.Services.AddMassTransit(x =>
 {
-    x.AddDelayedMessageScheduler();
+    x.AddSqlMessageScheduler();
 
     x.AddConsumer<ConvertVideoJobConsumer, ConvertVideoJobConsumerDefinition>()
         .Endpoint(e => e.Name = "convert-job-queue");
 
     x.AddConsumer<TrackVideoConvertedConsumer>();
+    
+    x.TryAddJobDistributionStrategy<DataCenterJobDistributionStrategy>();
+
+    x.AddConsumer<MaintenanceConsumer>();
 
     x.SetJobConsumerOptions();
     x.AddJobSagaStateMachines(options => options.FinalizeCompleted = false)
+        .SetPartitionedReceiveMode()
         .EntityFrameworkRepository(r =>
         {
             r.ExistingDbContext<JobServiceSagaDbContext>();
@@ -79,10 +92,11 @@ builder.Services.AddMassTransit(x =>
 
     x.SetKebabCaseEndpointNameFormatter();
 
-    x.UsingRabbitMq((context, cfg) =>
+    x.UsingPostgres((context, cfg) =>
     {
-        cfg.UseDelayedMessageScheduler();
-
+        cfg.UseSqlMessageScheduler();
+        cfg.UseJobSagaPartitionKeyFormatters();
+        
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -97,6 +111,8 @@ builder.Services.AddOptions<MassTransitHostOptions>()
 
 builder.Services.AddOptions<HostOptions>()
     .Configure(options => options.ShutdownTimeout = TimeSpan.FromMinutes(1));
+
+builder.Services.AddHostedService<RecurringJobConfigurationService>();
 
 var app = builder.Build();
 

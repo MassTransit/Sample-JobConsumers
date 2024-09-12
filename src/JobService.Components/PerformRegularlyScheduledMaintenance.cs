@@ -1,0 +1,3 @@
+namespace JobService.Components;
+
+public record PerformRegularlyScheduledMaintenance;
