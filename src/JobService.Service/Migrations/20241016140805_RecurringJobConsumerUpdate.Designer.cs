@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JobService.Service.Migrations
 {
     [DbContext(typeof(JobServiceSagaDbContext))]
-    [Migration("20241003235136_RecurringJobServiceUpdate")]
-    partial class RecurringJobServiceUpdate
+    [Migration("20241016140805_RecurringJobConsumerUpdate")]
+    partial class RecurringJobConsumerUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -92,6 +92,9 @@ namespace JobService.Service.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Job")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JobProperties")
                         .HasColumnType("text");
 
                     b.Property<Guid?>("JobRetryDelayToken")

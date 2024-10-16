@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JobService.Service.Migrations
 {
     /// <inheritdoc />
-    public partial class RecurringJobServiceUpdate : Migration
+    public partial class RecurringJobConsumerUpdate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,6 +37,12 @@ namespace JobService.Service.Migrations
 
             migrationBuilder.AddColumn<string>(
                 name: "IncompleteAttempts",
+                table: "JobSaga",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "JobProperties",
                 table: "JobSaga",
                 type: "text",
                 nullable: true);
@@ -117,6 +123,10 @@ namespace JobService.Service.Migrations
 
             migrationBuilder.DropColumn(
                 name: "IncompleteAttempts",
+                table: "JobSaga");
+
+            migrationBuilder.DropColumn(
+                name: "JobProperties",
                 table: "JobSaga");
 
             migrationBuilder.DropColumn(

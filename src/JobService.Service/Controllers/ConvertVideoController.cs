@@ -40,7 +40,7 @@
                     new() { Value = "first" },
                     new() { Value = "second" }
                 ]
-            }, x => x.Headers.Set("DataCenter", "EAST"));
+            }, x => x.Set("DataCenter", "EAST"));
 
             return Ok(new
             {

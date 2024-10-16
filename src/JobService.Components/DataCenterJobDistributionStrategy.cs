@@ -1,5 +1,6 @@
 namespace JobService.Components;
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MassTransit;
@@ -24,15 +25,14 @@ public class DataCenterJobDistributionStrategy :
 
     Task<ActiveJob?> DataCenter(ConsumeContext<AllocateJobSlot> context, JobTypeInfo jobTypeInfo)
     {
-        var dataCenter = context.GetHeader("DataCenter");
+        var dataCenter = context.Message.JobProperties?.GetValueOrDefault("DataCenter") as string;
 
         LogContext.Info?.Log("Job for data center: {DataCenter}", dataCenter);
 
         var instances = from i in jobTypeInfo.Instances
             join a in jobTypeInfo.ActiveJobs on i.Key equals a.InstanceAddress into ai
-            where (ai.Count() < jobTypeInfo.ConcurrentJobLimit
-                    && string.IsNullOrEmpty(dataCenter))
-                || (i.Value.Properties.TryGetValue("DataCenter", out var dc) && dc is string sdc && sdc == dataCenter)
+            where (ai.Count() < jobTypeInfo.ConcurrentJobLimit && string.IsNullOrEmpty(dataCenter))
+                || ((i.Value.Properties?.TryGetValue("DataCenter", out var dc) ?? false) && dc is string sdc && sdc == dataCenter)
             orderby ai.Count(), i.Value.Used
             select new
             {

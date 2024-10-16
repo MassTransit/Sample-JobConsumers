@@ -91,6 +91,9 @@ namespace JobService.Service.Migrations
                     b.Property<string>("Job")
                         .HasColumnType("text");
 
+                    b.Property<string>("JobProperties")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("JobRetryDelayToken")
                         .HasColumnType("uuid");
 
