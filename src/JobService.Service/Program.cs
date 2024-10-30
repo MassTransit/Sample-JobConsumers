@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using NSwag;
+using ResQueue;
 using Serilog;
 using Serilog.Events;
 
@@ -57,6 +58,10 @@ builder.Services.AddOptions<SqlTransportOptions>()
 
 builder.Services.AddPostgresMigrationHostedService();
 
+// Add web-based dashboard
+builder.AddResQueue(opt => opt.ConnectionString = connectionString);
+builder.Services.AddResQueueMigrationsHostedService();
+
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
 {
     optionsBuilder.UseNpgsql(connectionString, m =>
@@ -76,7 +81,7 @@ builder.Services.AddMassTransit(x =>
         .Endpoint(e => e.Name = "convert-job-queue");
 
     x.AddConsumer<TrackVideoConvertedConsumer>();
-    
+
     x.TryAddJobDistributionStrategy<DataCenterJobDistributionStrategy>();
 
     x.AddConsumer<MaintenanceConsumer>();
@@ -96,7 +101,7 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.UseSqlMessageScheduler();
         cfg.UseJobSagaPartitionKeyFormatters();
-        
+
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -124,6 +129,9 @@ app.UseSwaggerUi();
 
 app.UseRouting();
 app.UseAuthorization();
+
+// Bind dashboard to the /resqueue route
+app.UseResQueue("resqueue");
 
 static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
 {
