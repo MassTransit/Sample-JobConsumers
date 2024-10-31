@@ -16,6 +16,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using NSwag;
 using ResQueue;
+using ResQueue.Enums;
 using Serilog;
 using Serilog.Events;
 
@@ -59,7 +60,7 @@ builder.Services.AddOptions<SqlTransportOptions>()
 builder.Services.AddPostgresMigrationHostedService();
 
 // Add web-based dashboard
-builder.AddResQueue(opt => opt.ConnectionString = connectionString);
+builder.Services.AddResQueue(opt => opt.SqlEngine = ResQueueSqlEngine.Postgres);
 builder.Services.AddResQueueMigrationsHostedService();
 
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
