@@ -60,7 +60,10 @@ builder.Services.AddOptions<SqlTransportOptions>()
 builder.Services.AddPostgresMigrationHostedService();
 
 // Add web-based dashboard
-builder.Services.AddResQueue(opt => opt.SqlEngine = ResQueueSqlEngine.Postgres);
+builder.Services.AddResQueue(opt =>
+{
+    opt.SqlEngine = ResQueueSqlEngine.Postgres;
+});
 builder.Services.AddResQueueMigrationsHostedService();
 
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
