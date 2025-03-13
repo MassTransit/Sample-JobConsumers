@@ -25,8 +25,8 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("MassTransit", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.Hosting", LogEventLevel.Information)
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Fatal)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Fatal)
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .CreateLogger();
@@ -72,6 +72,8 @@ builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
     {
         m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
         m.MigrationsHistoryTable($"__{nameof(JobServiceSagaDbContext)}");
+        
+        m.EnableRetryOnFailure();
     });
 });
 
@@ -80,7 +82,7 @@ builder.Services.AddHostedService<MigrationHostedService<JobServiceSagaDbContext
 builder.Services.AddMassTransit(x =>
 {
     x.AddSqlMessageScheduler();
-
+    
     x.AddConsumer<ConvertVideoJobConsumer, ConvertVideoJobConsumerDefinition>()
         .Endpoint(e => e.Name = "convert-job-queue");
 
