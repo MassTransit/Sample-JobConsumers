@@ -1,15 +1,8 @@
-namespace JobService.Service;
-
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.RetryPolicies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
+namespace JobService.Service;
 
 public class MigrationHostedService<TDbContext> :
     IHostedService

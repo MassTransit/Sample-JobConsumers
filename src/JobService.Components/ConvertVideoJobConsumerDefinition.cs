@@ -1,8 +1,6 @@
-namespace JobService.Components;
-
-using System;
 using MassTransit;
 
+namespace JobService.Components;
 
 public class ConvertVideoJobConsumerDefinition :
     ConsumerDefinition<ConvertVideoJobConsumer>

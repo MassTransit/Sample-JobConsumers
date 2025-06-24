@@ -1,9 +1,7 @@
-namespace JobService.Components;
-
-using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
+namespace JobService.Components;
 
 public class MaintenanceConsumer :
     IJobConsumer<PerformRegularlyScheduledMaintenance>

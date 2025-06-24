@@ -1,7 +1,6 @@
-namespace JobService.Components
+namespace JobService.Components;
+
+public record VideoDetail
 {
-    public record VideoDetail
-    {
-        public string? Value { get; init; }
-    }
+    public string? Value { get; init; }
 }

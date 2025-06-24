@@ -1,12 +1,7 @@
-namespace JobService.Service;
-
-using System.Threading;
-using System.Threading.Tasks;
 using JobService.Components;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
+namespace JobService.Service;
 
 public class RecurringJobConfigurationService :
     BackgroundService

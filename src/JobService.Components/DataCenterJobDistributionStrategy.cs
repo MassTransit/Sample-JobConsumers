@@ -1,20 +1,15 @@
-namespace JobService.Components;
-
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Contracts.JobService;
 using MassTransit.JobService;
 
+namespace JobService.Components;
 
 public class DataCenterJobDistributionStrategy :
     IJobDistributionStrategy
 {
     public Task<ActiveJob?> IsJobSlotAvailable(ConsumeContext<AllocateJobSlot> context, JobTypeInfo jobTypeInfo)
     {
-        object? strategy = null;
-        jobTypeInfo.Properties?.TryGetValue("DistributionStrategy", out strategy);
+        jobTypeInfo.Properties.TryGetValue("DistributionStrategy", out var strategy);
 
         return strategy switch
         {
