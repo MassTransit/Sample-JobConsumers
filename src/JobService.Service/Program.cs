@@ -130,14 +130,7 @@ app.UseRouting();
 app.UseAuthorization();
 
 // Bind dashboard to the /resqueue route
-app.UseResQueue("resqueue");
-
-static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
-{
-    context.Response.ContentType = "application/json";
-
-    return context.Response.WriteAsync(result.ToJsonString());
-}
+app.UseResQueue();
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
@@ -150,3 +143,11 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions { ResponseWriter = He
 app.MapControllers();
 
 await app.RunAsync();
+return;
+
+static Task HealthCheckResponseWriter(HttpContext context, HealthReport result)
+{
+    context.Response.ContentType = "application/json";
+
+    return context.Response.WriteAsync(result.ToJsonString());
+}
