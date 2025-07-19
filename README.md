@@ -21,10 +21,10 @@ dotnet dev-certs https --trust
 Read more here:
 https://learn.microsoft.com/en-us/aspnet/core/security/docker-compose-https?view=aspnetcore-6.0#starting-a-container-with-https-support-using-docker-compose
 
-Use the `docker-compose.yml` file to startup JobService, and PostgreSQL. Or run `docker compose up --build`.    
+Use the `docker-compose.yml` file to startup JobService, and SQL Server. Or run `docker compose up --build`.    
 Navigate to `https://localhost:5003/swagger` to post a video to convert.
 
-The SQL transport is using PostgreSQL in this scenario. To use SQL Server, switch to the `sql-server` branch.
+The SQL transport is using SQL Server in this scenario. To use PostgreSQL, switch to the `master` branch.
 
 Supports local debugging from VS/Rider. Ctrl + F5 and navigate to:  
 `http://localhost:5002/swagger`  

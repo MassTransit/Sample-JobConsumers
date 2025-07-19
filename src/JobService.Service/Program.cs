@@ -50,18 +50,18 @@ builder.Services.AddOptions<SqlTransportOptions>()
         options.ConnectionString = connectionString;
     });
 
-builder.Services.AddPostgresMigrationHostedService();
+builder.Services.AddSqlServerMigrationHostedService();
 
 // Add web-based dashboard
 builder.Services.AddResQueue(opt =>
 {
-    opt.SqlEngine = ResQueueSqlEngine.Postgres;
+    opt.SqlEngine = ResQueueSqlEngine.SqlServer;
 });
 builder.Services.AddResQueueMigrationsHostedService();
 
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
 {
-    optionsBuilder.UseNpgsql(connectionString, m =>
+    optionsBuilder.UseSqlServer(connectionString, m =>
     {
         m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
         m.MigrationsHistoryTable($"__{nameof(JobServiceSagaDbContext)}");
@@ -93,12 +93,12 @@ builder.Services.AddMassTransit(x =>
         .EntityFrameworkRepository(r =>
         {
             r.ExistingDbContext<JobServiceSagaDbContext>();
-            r.UsePostgres();
+            r.UseSqlServer();
         });
 
     x.SetKebabCaseEndpointNameFormatter();
 
-    x.UsingPostgres((context, cfg) =>
+    x.UsingSqlServer((context, cfg) =>
     {
         cfg.UseSqlMessageScheduler();
         cfg.UseJobSagaPartitionKeyFormatters();

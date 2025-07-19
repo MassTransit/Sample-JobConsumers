@@ -1,25 +1,23 @@
 ﻿services:
-  postgres:
-    container_name: "JobService.Postgres"
-    image: "postgres:16"
+  mssql:
+    container_name: "JobService.SqlServer"
+    image: "mcr.microsoft.com/azure-sql-edge:latest"
     environment:
-      - "POSTGRES_USER=postgres"
-      - "POSTGRES_PASSWORD=Password12!"
-      - "POSTGRES_DB=JobService"
+      - "ACCEPT_EULA=Y"
+      - "SA_PASSWORD=Password12!"
     ports:
-      - "5432:5432"
+      - "1433:1433"  
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Password12!' -Q 'SELECT 1'" ]
       interval: 5s
       timeout: 10s
       retries: 10
-  
   jobservice:
     restart: on-failure
     container_name: "JobService.Service"
     image: jobservice/service
     depends_on:
-      postgres:
+      mssql:
         condition: service_healthy
     build:
       context: .
@@ -28,7 +26,7 @@
       - "5002:80"
       - "5003:443"
     environment:
-      - CONNECTIONSTRINGS__JOBSERVICE=server=postgres;port=5432;user id=postgres;password=Password12!;database=JobService;
+      - CONNECTIONSTRINGS__JOBSERVICE=Server=mssql,1433;Database=JobService;Persist Security Info=False;User ID=sa;Password=Password12!;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
