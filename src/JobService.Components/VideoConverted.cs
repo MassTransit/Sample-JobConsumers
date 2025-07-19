@@ -1,9 +1,8 @@
-namespace JobService.Components
+namespace JobService.Components;
+
+public record VideoConverted
 {
-    public record VideoConverted
-    {
-        public string? GroupId { get; init; }
-        public int Index { get; init; }
-        public int Count { get; init; }
-    }
+    public string? GroupId { get; init; }
+    public int Index { get; init; }
+    public int Count { get; init; }
 }

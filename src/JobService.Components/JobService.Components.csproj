@@ -3,10 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.4.0-develop.2236" />
+    <PackageReference Include="MassTransit" Version="8.5.1"/>
   </ItemGroup>
 
 </Project>
