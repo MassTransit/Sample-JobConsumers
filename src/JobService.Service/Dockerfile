@@ -8,6 +8,7 @@ WORKDIR /src
 
 COPY ["src/JobService.Service/JobService.Service.csproj", "src/JobService.Service/"]
 COPY ["src/JobService.Components/JobService.Components.csproj", "src/JobService.Components/"]
+COPY ["src/JobService.Contracts/JobService.Contracts.csproj", "src/JobService.Contracts/"]
 
 RUN dotnet restore "src/JobService.Service/JobService.Service.csproj"
 COPY . .

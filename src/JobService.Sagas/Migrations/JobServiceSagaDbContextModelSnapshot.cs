@@ -3,24 +3,21 @@ using System;
 using MassTransit.EntityFrameworkCoreIntegration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace JobService.Service.Migrations
+namespace JobService.Sagas.Migrations
 {
     [DbContext(typeof(JobServiceSagaDbContext))]
-    [Migration("20240812134106_Initial")]
-    partial class Initial
+    partial class JobServiceSagaDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -73,16 +70,28 @@ namespace JobService.Service.Migrations
                     b.Property<DateTime?>("Completed")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("CronExpression")
+                        .HasColumnType("text");
+
                     b.Property<int>("CurrentState")
                         .HasColumnType("integer");
 
                     b.Property<TimeSpan?>("Duration")
                         .HasColumnType("interval");
 
+                    b.Property<DateTimeOffset?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("Faulted")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("IncompleteAttempts")
+                        .HasColumnType("text");
+
                     b.Property<string>("Job")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JobProperties")
                         .HasColumnType("text");
 
                     b.Property<Guid?>("JobRetryDelayToken")
@@ -91,11 +100,26 @@ namespace JobService.Service.Migrations
                     b.Property<Guid?>("JobSlotWaitToken")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("JobState")
+                        .HasColumnType("text");
+
                     b.Property<TimeSpan?>("JobTimeout")
                         .HasColumnType("interval");
 
                     b.Property<Guid>("JobTypeId")
                         .HasColumnType("uuid");
+
+                    b.Property<long?>("LastProgressLimit")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("LastProgressSequenceNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("LastProgressValue")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("NextStartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Reason")
                         .HasColumnType("text");
@@ -106,11 +130,17 @@ namespace JobService.Service.Migrations
                     b.Property<string>("ServiceAddress")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("Started")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("Submitted")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("TimeZoneId")
+                        .HasColumnType("text");
 
                     b.HasKey("CorrelationId");
 
@@ -134,6 +164,9 @@ namespace JobService.Service.Migrations
                     b.Property<int>("CurrentState")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("GlobalConcurrentJobLimit")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Instances")
                         .HasColumnType("text");
 
@@ -146,9 +179,21 @@ namespace JobService.Service.Migrations
                     b.Property<DateTime?>("OverrideLimitExpiration")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("Properties")
+                        .HasColumnType("text");
+
                     b.HasKey("CorrelationId");
 
                     b.ToTable("JobTypeSaga");
+                });
+
+            modelBuilder.Entity("MassTransit.JobAttemptSaga", b =>
+                {
+                    b.HasOne("MassTransit.JobSaga", null)
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -1,8 +1,5 @@
-namespace JobService.Components;
+namespace JobService.Sagas.Components;
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MassTransit;
 using MassTransit.Contracts.JobService;
 using MassTransit.JobService;

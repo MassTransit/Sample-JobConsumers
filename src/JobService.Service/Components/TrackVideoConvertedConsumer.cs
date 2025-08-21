@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Contracts;
 using JobService.Components;
 using MassTransit;
 using Microsoft.Extensions.Logging;

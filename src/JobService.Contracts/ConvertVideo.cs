@@ -1,7 +1,4 @@
-namespace JobService.Components;
-
-using System.Collections.Generic;
-
+namespace JobService.Contracts;
 
 public record ConvertVideo
 {

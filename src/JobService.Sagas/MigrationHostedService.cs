@@ -1,4 +1,4 @@
-namespace JobService.Service;
+namespace JobService.Sagas;
 
 using System;
 using System.Threading;

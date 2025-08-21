@@ -1,6 +1,7 @@
 namespace JobService.Components;
 
 using System;
+using Contracts;
 using MassTransit;
 
 

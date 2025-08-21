@@ -1,4 +1,4 @@
-namespace JobService.Components;
+namespace JobService.Contracts;
 
 public record VideoConverted
 {

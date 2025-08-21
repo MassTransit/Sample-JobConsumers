@@ -37,3 +37,27 @@
       - DATA_CENTER=EAST
     volumes:
       - ~/.aspnet/https:/https:ro
+
+  jobsagas:
+    restart: on-failure
+    container_name: "JobService.Sagas"
+    image: jobservice/sagas
+    depends_on:
+      postgres:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: ./src/JobService.Sagas/Dockerfile
+    ports:
+      - "5004:80"
+      - "5005:443"
+    environment:
+      - CONNECTIONSTRINGS__JOBSERVICE=server=postgres;port=5432;user id=postgres;password=Password12!;database=JobService;
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_HTTPS_PORT=5005
+      - DATA_CENTER=EAST
+    volumes:
+      - ~/.aspnet/https:/https:ro

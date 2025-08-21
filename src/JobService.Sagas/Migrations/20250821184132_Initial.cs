@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace JobService.Service.Migrations
+namespace JobService.Sagas.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -11,25 +11,6 @@ namespace JobService.Service.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "JobAttemptSaga",
-                columns: table => new
-                {
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CurrentState = table.Column<int>(type: "integer", nullable: false),
-                    JobId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RetryAttempt = table.Column<int>(type: "integer", nullable: false),
-                    ServiceAddress = table.Column<string>(type: "text", nullable: true),
-                    InstanceAddress = table.Column<string>(type: "text", nullable: true),
-                    Started = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    Faulted = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    StatusCheckTokenId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_JobAttemptSaga", x => x.CorrelationId);
-                });
-
             migrationBuilder.CreateTable(
                 name: "JobSaga",
                 columns: table => new
@@ -49,7 +30,18 @@ namespace JobService.Service.Migrations
                     Faulted = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Reason = table.Column<string>(type: "text", nullable: true),
                     JobSlotWaitToken = table.Column<Guid>(type: "uuid", nullable: true),
-                    JobRetryDelayToken = table.Column<Guid>(type: "uuid", nullable: true)
+                    JobRetryDelayToken = table.Column<Guid>(type: "uuid", nullable: true),
+                    IncompleteAttempts = table.Column<string>(type: "text", nullable: true),
+                    LastProgressValue = table.Column<long>(type: "bigint", nullable: true),
+                    LastProgressLimit = table.Column<long>(type: "bigint", nullable: true),
+                    LastProgressSequenceNumber = table.Column<long>(type: "bigint", nullable: true),
+                    JobState = table.Column<string>(type: "text", nullable: true),
+                    JobProperties = table.Column<string>(type: "text", nullable: true),
+                    CronExpression = table.Column<string>(type: "text", nullable: true),
+                    TimeZoneId = table.Column<string>(type: "text", nullable: true),
+                    StartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    NextStartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -64,15 +56,42 @@ namespace JobService.Service.Migrations
                     CurrentState = table.Column<int>(type: "integer", nullable: false),
                     ActiveJobCount = table.Column<int>(type: "integer", nullable: false),
                     ConcurrentJobLimit = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
                     OverrideJobLimit = table.Column<int>(type: "integer", nullable: true),
                     OverrideLimitExpiration = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     ActiveJobs = table.Column<string>(type: "text", nullable: true),
-                    Instances = table.Column<string>(type: "text", nullable: true)
+                    Instances = table.Column<string>(type: "text", nullable: true),
+                    Properties = table.Column<string>(type: "text", nullable: true),
+                    GlobalConcurrentJobLimit = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_JobTypeSaga", x => x.CorrelationId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JobAttemptSaga",
+                columns: table => new
+                {
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CurrentState = table.Column<int>(type: "integer", nullable: false),
+                    JobId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RetryAttempt = table.Column<int>(type: "integer", nullable: false),
+                    ServiceAddress = table.Column<string>(type: "text", nullable: true),
+                    InstanceAddress = table.Column<string>(type: "text", nullable: true),
+                    Started = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    Faulted = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    StatusCheckTokenId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobAttemptSaga", x => x.CorrelationId);
+                    table.ForeignKey(
+                        name: "FK_JobAttemptSaga_JobSaga_JobId",
+                        column: x => x.JobId,
+                        principalTable: "JobSaga",
+                        principalColumn: "CorrelationId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -89,10 +108,10 @@ namespace JobService.Service.Migrations
                 name: "JobAttemptSaga");
 
             migrationBuilder.DropTable(
-                name: "JobSaga");
+                name: "JobTypeSaga");
 
             migrationBuilder.DropTable(
-                name: "JobTypeSaga");
+                name: "JobSaga");
         }
     }
 }
