@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.2"/>
-    <PackageReference Include="MassTransit.SqlTransport.PostgreSQL" Version="8.5.2"/>
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.5" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.5" />
+    <PackageReference Include="MassTransit.SqlTransport.PostgreSQL" Version="8.5.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

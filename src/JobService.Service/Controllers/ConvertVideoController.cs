@@ -1,14 +1,9 @@
 ﻿namespace JobService.Service.Controllers;
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Contracts;
-using JobService.Components;
 using MassTransit;
 using MassTransit.Contracts.JobService;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 
 [ApiController]

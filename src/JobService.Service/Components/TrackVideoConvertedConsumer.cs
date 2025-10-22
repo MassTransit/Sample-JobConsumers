@@ -1,14 +1,8 @@
 namespace JobService.Service.Components;
 
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Contracts;
-using JobService.Components;
 using MassTransit;
-using Microsoft.Extensions.Logging;
 
 
 public class TrackVideoConvertedConsumer :

@@ -39,18 +39,20 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var connectionString = builder.Configuration.GetConnectionString("JobService");
 
-builder.Services.AddOptions<SqlTransportOptions>()
-    .Configure(options =>
-    {
-        options.ConnectionString = connectionString;
-    });
+var serviceBusConnectionString = builder.Configuration.GetConnectionString("AzureServiceBus");
+if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
+{
+    builder.Services.AddOptions<SqlTransportOptions>()
+        .Configure(options =>
+        {
+            options.ConnectionString = connectionString;
+        });
 
-builder.Services.AddPostgresMigrationHostedService();
+    builder.Services.AddPostgresMigrationHostedService();
+}
 
 builder.Services.AddMassTransit(x =>
 {
-    x.AddSqlMessageScheduler();
-
     x.AddConsumer<ConvertVideoJobConsumer, ConvertVideoJobConsumerDefinition>()
         .Endpoint(e => e.Name = "convert-job-queue");
 
@@ -62,12 +64,30 @@ builder.Services.AddMassTransit(x =>
 
     x.SetKebabCaseEndpointNameFormatter();
 
-    x.UsingPostgres((context, cfg) =>
+    if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
     {
-        cfg.UseSqlMessageScheduler();
+        x.AddSqlMessageScheduler();
 
-        cfg.ConfigureEndpoints(context);
-    });
+        x.UsingPostgres((context, cfg) =>
+        {
+            cfg.UseSqlMessageScheduler();
+
+            cfg.ConfigureEndpoints(context);
+        });
+    }
+    else
+    {
+        x.AddServiceBusMessageScheduler();
+
+        x.UsingAzureServiceBus((context, cfg) =>
+        {
+            cfg.Host(serviceBusConnectionString);
+
+            cfg.UseServiceBusMessageScheduler();
+
+            cfg.ConfigureEndpoints(context);
+        });
+    }
 });
 
 builder.Services.AddOptions<MassTransitHostOptions>()

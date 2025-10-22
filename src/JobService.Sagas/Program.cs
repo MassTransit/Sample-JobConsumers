@@ -33,21 +33,24 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var connectionString = builder.Configuration.GetConnectionString("JobService");
 
-builder.Services.AddOptions<SqlTransportOptions>()
-    .Configure(options =>
-    {
-        options.ConnectionString = connectionString;
-    });
-
-builder.Services.AddPostgresMigrationHostedService();
-
-// Add web-based dashboard
-builder.Services.AddResQueue(opt =>
+var serviceBusConnectionString = builder.Configuration.GetConnectionString("AzureServiceBus");
+if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
 {
-    opt.SqlEngine = ResQueueSqlEngine.Postgres;
-});
+    builder.Services.AddOptions<SqlTransportOptions>()
+        .Configure(options =>
+        {
+            options.ConnectionString = connectionString;
+        });
 
-builder.Services.AddResQueueMigrationsHostedService();
+    builder.Services.AddPostgresMigrationHostedService();
+
+    builder.Services.AddResQueue(opt =>
+    {
+        opt.SqlEngine = ResQueueSqlEngine.Postgres;
+    });
+    builder.Services.AddResQueueMigrationsHostedService();
+}
+
 
 builder.Services.AddDbContext<JobServiceSagaDbContext>(optionsBuilder =>
 {
@@ -64,8 +67,6 @@ builder.Services.AddHostedService<MigrationHostedService<JobServiceSagaDbContext
 
 builder.Services.AddMassTransit(x =>
 {
-    x.AddSqlMessageScheduler();
-
     x.TryAddJobDistributionStrategy<DataCenterJobDistributionStrategy>();
 
     x.AddJobSagaStateMachines(options => options.FinalizeCompleted = true)
@@ -78,13 +79,32 @@ builder.Services.AddMassTransit(x =>
 
     x.SetKebabCaseEndpointNameFormatter();
 
-    x.UsingPostgres((context, cfg) =>
+    if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
     {
-        cfg.UseSqlMessageScheduler();
-        cfg.UseJobSagaPartitionKeyFormatters();
+        x.AddSqlMessageScheduler();
 
-        cfg.ConfigureEndpoints(context);
-    });
+        x.UsingPostgres((context, cfg) =>
+        {
+            cfg.UseSqlMessageScheduler();
+            cfg.UseJobSagaPartitionKeyFormatters();
+
+            cfg.ConfigureEndpoints(context);
+        });
+    }
+    else
+    {
+        x.AddServiceBusMessageScheduler();
+
+        x.UsingAzureServiceBus((context, cfg) =>
+        {
+            cfg.Host(serviceBusConnectionString);
+
+            cfg.UseServiceBusMessageScheduler();
+            cfg.UseJobSagaPartitionKeyFormatters();
+
+            cfg.ConfigureEndpoints(context);
+        });
+    }
 });
 
 builder.Services.AddOptions<MassTransitHostOptions>()
@@ -106,7 +126,8 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseAuthorization();
 
-app.UseResQueue();
+if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
+    app.UseResQueue();
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {

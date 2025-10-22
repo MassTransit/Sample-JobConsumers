@@ -21,6 +21,8 @@ public class RecurringJobConfigurationService :
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        
         await using var scope = _scopeFactory.CreateAsyncScope();
 
         var endpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();

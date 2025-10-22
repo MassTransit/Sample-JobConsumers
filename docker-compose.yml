@@ -29,6 +29,7 @@
       - "5003:443"
     environment:
       - CONNECTIONSTRINGS__JOBSERVICE=server=postgres;port=5432;user id=postgres;password=Password12!;database=JobService;
+ #     - CONNECTIONSTRINGS__AZURESERVICEBUS=
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
@@ -53,6 +54,7 @@
       - "5005:443"
     environment:
       - CONNECTIONSTRINGS__JOBSERVICE=server=postgres;port=5432;user id=postgres;password=Password12!;database=JobService;
+#      - CONNECTIONSTRINGS__AZURESERVICEBUS=
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
